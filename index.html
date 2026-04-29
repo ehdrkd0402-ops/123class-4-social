@@ -2,72 +2,50 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>국가유산 배움터</title>
     <style>
-        body { font-family: 'Pretendard', sans-serif; background: #f4f7f6; margin: 0; padding: 20px; }
-        .container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; max-width: 1200px; margin: 0 auto; }
-        .card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); transition: 0.3s; }
-        .card:hover { transform: translateY(-5px); }
-        .card img { width: 100%; height: 200px; object-fit: cover; background: #eee; }
-        .card-content { padding: 20px; }
-        .tag { background: #e8f4fd; color: #3498db; padding: 4px 8px; border-radius: 5px; font-size: 12px; font-weight: bold; }
-        h1 { text-align: center; color: #333; margin-bottom: 40px; font-size: 2.5rem; }
-        h3 { margin: 10px 0; color: #222; }
-        p { color: #666; line-height: 1.6; font-size: 15px; }
-        #loading { text-align: center; font-size: 18px; color: #888; margin-top: 50px; }
+        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; text-align: center; }
+        .container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
+        .card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .card img { width: 100%; height: 200px; object-fit: cover; }
+        .content { padding: 15px; }
     </style>
 </head>
 <body>
     <h1>🇰🇷 국가유산 배움터</h1>
-    <div id="loading">국가유산 정보를 불러오고 있습니다...</div>
-    <div id="heritage-container" class="container"></div>
+    <div id="heritage-container" class="container">데이터를 불러오는 중...</div>
 
     <script>
-        // 선생님의 구글 시트 CSV 주소 (중요: pub?output=csv 형식)
         const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTRxczjuFsTmotGcJMSOFEdn4NZ-NiHjcPrsTaC7UJw835lLTk1p1rmdowYrLBX8x3nUWgd1bwxclfI/pub?output=csv';
 
         async function loadData() {
             try {
-                const response = await fetch(sheetUrl);
-                const csvText = await response.text();
-                
-                // 데이터 줄바꿈 및 쉼표 처리
-                const rows = csvText.split('\n').filter(row => row.trim() !== '').slice(1);
+                const res = await fetch(sheetUrl);
+                const text = await res.text();
+                const rows = text.split('\n').slice(1);
                 const container = document.getElementById('heritage-container');
-                const loading = document.getElementById('loading');
-
-                if (rows.length === 0) {
-                    loading.innerText = "시트에 입력된 데이터가 없습니다.";
-                    return;
-                }
-
-                loading.style.display = 'none';
                 container.innerHTML = '';
 
                 rows.forEach(row => {
-                    // 쉼표로 나누되 따옴표 안의 쉼표는 무시하는 정규식
-                    const cols = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
-                    if (!cols || cols.length < 4) return;
-
-                    const category = cols[0].replace(/"/g, "");
-                    const name = cols[1].replace(/"/g, "");
-                    const desc = cols[2].replace(/"/g, "");
-                    const imgUrl = cols[3].trim().replace(/"/g, "");
-
-                    container.innerHTML += `
-                        <div class="card">
-                            <img src="${imgUrl}" alt="${name}" onerror="this.src='https://via.placeholder.com/400x250?text=사진을+준비중입니다'">
-                            <div class="card-content">
-                                <span class="tag">${category}</span>
-                                <h3>${name}</h3>
-                                <p>${desc}</p>
-                            </div>
-                        </div>
-                    `;
+                    const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    if (cols.length >= 4) {
+                        const cat = cols[0].replace(/"/g, "");
+                        const name = cols[1].replace(/"/g, "");
+                        const desc = cols[2].replace(/"/g, "");
+                        const img = cols[3].trim().replace(/"/g, "");
+                        container.innerHTML += `
+                            <div class="card">
+                                <img src="${img}" onerror="this.src='https://via.placeholder.com/400x200?text=사진준비중'">
+                                <div class="content">
+                                    <small>${cat}</small>
+                                    <h3>${name}</h3>
+                                    <p>${desc}</p>
+                                </div>
+                            </div>`;
+                    }
                 });
             } catch (e) {
-                document.getElementById('loading').innerText = "데이터를 불러오지 못했습니다. 시트 공유 설정을 확인해주세요.";
+                document.getElementById('heritage-container').innerText = '데이터 로드 실패';
             }
         }
         loadData();
