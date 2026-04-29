@@ -1,0 +1,37 @@
+<script>
+    // ⚠️ 중요: 주소 끝이 pubhtml이 아니라 output=csv여야 합니다!
+    const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTRxczjuFsTmotGcJMSOFEdn4NZ-NiHjcPrsTaC7UJw835lLTk1p1rmdowYrLBX8x3nUWgd1bwxclfI/pub?output=csv';
+
+    async function loadHeritageData() {
+        try {
+            const response = await fetch(sheetUrl);
+            const data = await response.text();
+            
+            // 데이터가 비어있지 않은지 확인
+            const rows = data.split('\n').filter(row => row.trim() !== '').slice(1);
+            const container = document.getElementById('heritage-container');
+            container.innerHTML = ''; 
+
+            rows.forEach(row => {
+                const columns = row.split(','); 
+                if (columns.length < 4) return;
+
+                const [category, name, desc, imgUrl] = columns;
+                const cardHtml = `
+                    <div class="card">
+                        <img src="${imgUrl}" alt="${name}" onerror="this.src='https://via.placeholder.com/400x250?text=이미지준비중'">
+                        <div class="card-content">
+                            <small style="color: #3498db; font-weight: bold;">${category}</small>
+                            <h3 style="margin: 8px 0;">${name}</h3>
+                            <p style="font-size: 0.9rem; color: #555;">${desc}</p>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += cardHtml;
+            });
+        } catch (error) {
+            console.error("오류 발생:", error);
+        }
+    }
+    loadHeritageData();
+</script>
